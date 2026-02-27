@@ -1,0 +1,64 @@
+# Runs on every PR targeting the develop branch.
+# Verifies TypeScript types compile and the debug Tauri build succeeds.
+# The debug binary is uploaded as a short-lived workflow artifact.
+
+name: Build
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build:
+    name: Build & verify (Windows x64)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      # Puts the MSVC link.exe first in PATH, overriding Git's link.exe.
+      # CARGO_TARGET_… env var below also overrides the hardcoded path in
+      # src-tauri/.cargo/config.toml (which points to the local dev machine).
+      - name: Setup MSVC build environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+      # Frontend must be built before cargo runs (generate_context! reads dist/)
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app (debug)
+        env:
+          # Overrides the absolute local path in src-tauri/.cargo/config.toml
+          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER: link.exe
+        run: npm run tauri build -- --debug
+
+      - name: Upload debug binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: photobook-debug-${{ github.sha }}
+          path: src-tauri/target/debug/photobook.exe
+          retention-days: 7
