@@ -1,0 +1,6 @@
+# No linker override needed here.
+# The build must be started from an MSVC-aware shell so that the correct
+# link.exe (MSVC) is first in PATH — not Git's link.exe.
+#
+# Easiest way locally: run  .\build.ps1  in the project root.
+# In CI this is handled by the ilammy/msvc-dev-cmd GitHub Actions step.
