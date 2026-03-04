@@ -24,6 +24,8 @@ jobs:
   release:
     name: Build & release (Windows x64)
     runs-on: windows-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout
@@ -50,6 +52,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri -> target
+
+      - name: Install NSIS
+        run: choco install nsis --no-progress -y
 
       - name: Install Node dependencies
         run: npm ci
@@ -96,7 +101,6 @@ jobs:
             - Windows 10 / 11 (x64)
             - WebView2 runtime (included in Windows 11; the installer will prompt on Windows 10)
           files: src-tauri/target/release/bundle/nsis/PhotoBook_*_x64-setup.exe
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
