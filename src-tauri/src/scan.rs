@@ -9,7 +9,7 @@ use std::sync::{atomic::Ordering, Arc};
 use tauri::Emitter;
 use walkdir::WalkDir;
 
-pub const SUPPORTED_EXT: &[&str] = &["jpg", "jpeg", "png", "tif", "tiff"];
+pub const SUPPORTED_EXT: &[&str] = &["jpg", "jpeg", "png", "tif", "tiff", "webp"];
 
 /// Number of files given to rayon per parallel EXIF-extraction pass.
 const BATCH_SIZE: usize = 1000;
