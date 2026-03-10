@@ -219,6 +219,19 @@ impl Database {
     }
 
     /// Returns every known path with its stored last_modified_ms (0 if NULL).
+    /// Switch synchronous mode for bulk imports.
+    /// `synchronous=OFF` eliminates WAL fsync overhead and can give 10-100x
+    /// faster batch inserts.  Safe for a re-scannable index; call with
+    /// `false` immediately after the bulk operation to restore durability.
+    pub fn set_bulk_mode(&self, on: bool) -> SqlResult<()> {
+        let conn = self.0.lock().unwrap();
+        conn.execute_batch(if on {
+            "PRAGMA synchronous=OFF;"
+        } else {
+            "PRAGMA synchronous=NORMAL;"
+        })
+    }
+
     pub fn get_all_paths_with_mtime(&self) -> SqlResult<HashMap<String, i64>> {
         let conn = self.0.lock().unwrap();
         let mut stmt = conn.prepare(
